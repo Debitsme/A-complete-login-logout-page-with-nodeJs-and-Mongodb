@@ -1,11 +1,12 @@
 //jshint esversion:6
+require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
 const encrypt= require("mongoose-encryption");
 
-
+console.log(process.env.SECRET);
 
 const app = express();
 app.use(express.static("public"));
@@ -23,11 +24,13 @@ const userSchema =new mongoose.Schema({
 });
 
 //must add before the model
-const secret= "Thisisofourlongdamnsecret."
+
+//here was our encrypted code which has been transferred to .env 
+
 // var secret = process.env.SOME_LONG_UNGUESSABLE_STRING;
 // encryptedFields: ['password']  why added that?
 //bcz we want to encrypt only password not email
-userSchema.plugin(encrypt, { secret: secret , encryptedFields: ['password']  });
+userSchema.plugin(encrypt, { secret: process.env.SECRET , encryptedFields: ['password']  });
 
 
 const User = new mongoose.model("User", userSchema);
