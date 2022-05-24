@@ -3,6 +3,9 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
+const encrypt= require("mongoose-encryption");
+
+
 
 const app = express();
 app.use(express.static("public"));
@@ -14,10 +17,19 @@ app.use(
 );
 
 mongoose.connect("mongodb://localhost:27017/userDB");
-const userSchema = {
+const userSchema =new mongoose.Schema({
   email: String,
   password: String,
-};
+});
+
+//must add before the model
+const secret= "Thisisofourlongdamnsecret."
+// var secret = process.env.SOME_LONG_UNGUESSABLE_STRING;
+// encryptedFields: ['password']  why added that?
+//bcz we want to encrypt only password not email
+userSchema.plugin(encrypt, { secret: secret , encryptedFields: ['password']  });
+
+
 const User = new mongoose.model("User", userSchema);
 
 app.get("/", (req, res) => {
