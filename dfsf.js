@@ -1,15 +1,13 @@
-function string(lar, sm) {
-    var count = 0;
-    for (let i = 0; i < lar.length; i++) {
-        for (let z = 0; z < sm.length; z++) {
-            if (sm[z] !== lar[i + z]) {
-                break;
-            }
-            if (z === sm.length - 1) {
-                count++
-            }
+function run(arr) {
+    for (let i = 1; i < arr.length; i++) {
+        var seco = arr[i];
+        for (var j = i - 1; j >= 0 && arr[j] > seco; j--) {
+            arr[j + 1] = arr[j]
         }
+        arr[j + 1] = seco
     }
-    return count;
+    return arr
+
 }
-string("asbndjfhf", "bn")
+
+run([33, 24, 5, 6, 7, 88])
