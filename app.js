@@ -22,7 +22,6 @@ app.use(
     extended: true,
   })
 );
-// const saltRounds = 10;
 //always place this code before mongoose-connect
 app.use(session({
   secret: 'Lets do it.',
@@ -44,6 +43,7 @@ const userSchema = new mongoose.Schema({
   //these were added after the google login
   //findorcreate my jo google id hy wo yha sy aye hy 
   googleId: String,
+  //to add a scret
   secret: String
 });
 //below schema
@@ -52,14 +52,7 @@ userSchema.plugin(passportLocalMongoose);
 userSchema.plugin(findOrCreate);
 
 
-//must add before the model
 
-//here was our encrypted code which has been transferred to .env 
-
-// var secret = process.env.SOME_LONG_UNGUESSABLE_STRING;
-// encryptedFields: ['password']  why added that?
-//bcz we want to encrypt only password not email
-// userSchema.plugin(encrypt, { secret: process.env.SECRET , encryptedFields: ['password']  });
 
 
 const User = new mongoose.model("User", userSchema);
@@ -72,12 +65,12 @@ passport.use(User.createStrategy());
 
 
 // for all
-passport.serializeUser(function(user, done) {
+passport.serializeUser(function (user, done) {
   done(null, user.id);
 });
 
-passport.deserializeUser(function(id, done) {
-  User.findById(id, function(err, user) {
+passport.deserializeUser(function (id, done) {
+  User.findById(id, function (err, user) {
     done(err, user);
   });
 });
@@ -89,12 +82,12 @@ passport.use(new GoogleStrategy({
   callbackURL: "http://localhost:3000/auth/google/Secret",
   userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
 },
-//in order to work findorcraeate(as it is not function we have to install mongoose-findorcreate)
-function(accessToken, refreshToken, profile, cb) {
-  User.findOrCreate({ googleId: profile.id }, function (err, user) {
-    return cb(err, user);
-  });
-}
+  //in order to work findorcraeate(as it is not function we have to install mongoose-findorcreate)
+  function (accessToken, refreshToken, profile, cb) {
+    User.findOrCreate({ googleId: profile.id }, function (err, user) {
+      return cb(err, user);
+    });
+  }
 ));
 
 app.get("/", (req, res) => {
@@ -108,7 +101,7 @@ app.get("/auth/google",
 //to redirect to our secret page
 app.get("/auth/google/Secret",
   passport.authenticate('google', { failureRedirect: "/login" }),
-  function(req, res) {
+  function (req, res) {
     // Successful authentication, redirect to secrets.
     res.redirect("/secrets");
   });
@@ -121,11 +114,16 @@ app.get("/register", (req, res) => {
 });
 app.get("/secrets", (req, res) => {
 
-  if (req.isAuthenticated()) {
-    res.render(__dirname + "/views/secrets.ejs")
-  } else {
-    res.redirect("/login")
-  }
+ 
+  User.find({"secret": {$ne: null}}, function(err, foundUsers){
+    if (err){
+      console.log(err);
+    } else {
+      if (foundUsers) {
+        res.render("secrets", {usersWithSecrets: foundUsers});
+      }
+    }
+  });
 
 });
 
@@ -144,6 +142,32 @@ app.post("/register", (req, res) => {
 
 
     // Value 'result' is set to false. The user could not be authenticated since the user is not active
+  });
+});
+
+app.get("/submit", function (req, res) {
+  if (req.isAuthenticated()) {
+    res.render("submit");
+  } else {
+    res.redirect("/login");
+  }
+});
+
+app.post("/submit", function (req, res) {
+  const submittedSecret = req.body.secret;
+
+
+  User.findById(req.user.id, function (err, foundUser) {
+    if (err) {
+      console.log(err);
+    } else {
+      if (foundUser) {
+        foundUser.secret = submittedSecret;
+        foundUser.save(function () {
+          res.redirect("/secrets");
+        });
+      }
+    }
   });
 });
 
